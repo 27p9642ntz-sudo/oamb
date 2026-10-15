@@ -12,7 +12,8 @@
     "db:seed": "prisma db seed",
     "db:reset": "prisma db push --force-reset && prisma db seed",
     "setup": "prisma db push && prisma db seed",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "node scripts/test.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

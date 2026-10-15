@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { formatDate, vanToday } from "@/lib/dates";
 import { TASK_CATEGORIES } from "@/lib/constants";
@@ -13,7 +14,10 @@ const priorityStyle: Record<string, string> = {
 };
 
 export default async function TodosPage() {
-  const tasks = await prisma.task.findMany({ orderBy: [{ done: "asc" }, { dueDate: "asc" }] });
+  const tasks = await prisma.task.findMany({
+    orderBy: [{ done: "asc" }, { dueDate: "asc" }],
+    include: { prospect: { select: { id: true, businessName: true } } },
+  });
   const today = vanToday();
 
   return (
@@ -50,6 +54,11 @@ export default async function TodosPage() {
                             {t.dueDate ? `Due ${formatDate(t.dueDate)}` : "No due date"}
                             {overdue && " · Overdue"}
                           </div>
+                          {t.prospect && (
+                            <Link href={`/outreach/${t.prospect.id}`} className="text-xs text-brand-700 hover:underline">
+                              Open {t.prospect.businessName}
+                            </Link>
+                          )}
                           {t.notes && <div className="mt-1 text-xs text-slate-500">{t.notes}</div>}
                         </div>
                         <span className={`badge ${priorityStyle[t.priority] ?? ""}`}>{t.priority}</span>

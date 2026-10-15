@@ -22,6 +22,23 @@ on the same Wi-Fi.
 First thing to do: open **Settings** and add your email and phone. They go into the signature
 on every outreach email, along with the opt-out line (required by CASL).
 
+## Outreach CRM
+
+- **Pipeline** (drag cards between stages, or use the dropdown on a phone), **Table** (sort by any
+  column header, filter by niche, province, city, status and whether they run ads), **Stats** and
+  **Templates**.
+- Sending: open a prospect, pick a template, then **Open in mail app** (logs the send and opens a
+  pre-filled email) or **Copy to clipboard**, then **I sent it, log it**. Nothing is sent automatically.
+- Sending the first email moves a prospect to Contacted, sets a follow-up due in 3 days and adds a
+  follow-up task to To-Dos. Each prospect gets one follow-up only. If there is no reply 7 days after
+  the follow-up, the CRM prompts you to mark it Lost.
+- **They replied "no thanks"** marks the prospect Do not contact, and emailing them is then blocked.
+- Moving a prospect to Pilot or Paying client shows **Create client workspace**, which copies their
+  details into Clients along with the onboarding checklist.
+- **Import CSV** guesses which column is which from the headers. You can change any match before
+  importing. Rows that repeat an email you already have, or a business in the same city, are skipped.
+  **Export CSV** exports whatever the current filters show.
+
 ## Data
 
 - Everything lives in one file: `prisma/dev.db`. Back it up by copying that file somewhere safe.
@@ -34,6 +51,7 @@ A one-click JSON and CSV export is planned for phase 7.
 ## Checks
 
 ```bash
+npm test              # CRM rules, against a throwaway prisma/test.db
 npm run typecheck     # TypeScript
 npm run check:dashes  # fails if an em dash appears in source or docs
 npm run build         # production build
@@ -42,7 +60,7 @@ npm run build         # production build
 ## Build progress
 
 1. [x] Scaffold, database, seed data, navigation
-2. [ ] Outreach CRM
+2. [x] Outreach CRM
 3. [ ] To-Dos with recurring tasks and CRM-linked follow-ups
 4. [ ] Goal Dashboard: projection, scenario chart, outreach stats
 5. [ ] Client Portal: overview, onboarding, invoices

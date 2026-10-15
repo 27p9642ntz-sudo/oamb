@@ -52,6 +52,7 @@ model Task {
   priority      String    @default("Medium") // High | Medium | Low
   done          Boolean   @default(false)
   doneAt        DateTime?
+  kind          String    @default("manual") // manual | follow-up | recurring
   recurringRule String?   // e.g. weekday-outreach, daily-followups, weekly-audits
   notes         String    @default("")
   prospectId    Int?
@@ -100,7 +101,10 @@ model Activity {
   prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
   type       String   // email | follow-up | reply | call | note | status
   date       DateTime @default(now())
+  // For type "status" this is the new stage name exactly.
   note       String   @default("")
+
+  @@index([type, date])
 }
 
 model EmailTemplate {
