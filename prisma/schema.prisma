@@ -1,0 +1,238 @@
+// Ads Business Command Center data model.
+// All money is stored as integer cents (CA$). All dates are stored in UTC and
+// displayed in America/Vancouver.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model GoalSettings {
+  id                 Int      @id @default(1)
+  goalCents          Int      @default(400000)
+  targetMonthIndex   Int      @default(4)
+  startDate          DateTime
+  monthlyFromPayCents Int     @default(60000)
+  // Sender identity used in every outreach email signature (CASL).
+  ownerName          String   @default("Owen McIntyre")
+  ownerEmail         String   @default("")
+  ownerPhone         String   @default("")
+  ownerWebsite       String   @default("")
+  unsubscribeLine    String   @default("Not interested? Reply 'no thanks' and I won't contact you again.")
+  updatedAt          DateTime @updatedAt
+}
+
+model Month {
+  id           Int      @id @default(autoincrement())
+  index        Int      @unique
+  label        String
+  startDate    DateTime
+  endDate      DateTime
+  fromPayCents Int      @default(60000)
+  notes        String   @default("")
+}
+
+model Milestone {
+  id         Int       @id @default(autoincrement())
+  order      Int
+  title      String
+  targetDate DateTime
+  doneDate   DateTime?
+}
+
+model Task {
+  id            Int       @id @default(autoincrement())
+  title         String
+  category      String    // Setup | Outreach | Client work | Admin
+  dueDate       DateTime?
+  priority      String    @default("Medium") // High | Medium | Low
+  done          Boolean   @default(false)
+  doneAt        DateTime?
+  recurringRule String?   // e.g. weekday-outreach, daily-followups, weekly-audits
+  notes         String    @default("")
+  prospectId    Int?
+  prospect      Prospect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  clientId      Int?
+  client        Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+}
+
+model Prospect {
+  id                 Int        @id @default(autoincrement())
+  businessName       String
+  niche              String     @default("")
+  contactName        String     @default("")
+  role               String     @default("")
+  email              String     @default("")
+  phone              String     @default("")
+  website            String     @default("")
+  instagram          String     @default("")
+  city               String     @default("")
+  province           String     @default("")
+  googleRating       Float?
+  reviewCount        Int?
+  runningGoogleAds   String     @default("unknown") // yes | no | unknown
+  runningMetaAds     String     @default("unknown") // yes | no | unknown
+  websiteQuality     String     @default("none")    // good | weak | none
+  opportunityNotes   String     @default("")
+  source             String     @default("")
+  status             String     @default("New")
+  firstContactedAt   DateTime?
+  followUpDueAt      DateTime?
+  followUpSentAt     DateTime?
+  lastActivityAt     DateTime?
+  doNotContact       Boolean    @default(false)
+  notes              String     @default("")
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  activities         Activity[]
+  tasks              Task[]
+  clients            Client[]
+}
+
+model Activity {
+  id         Int      @id @default(autoincrement())
+  prospectId Int
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  type       String   // email | follow-up | reply | call | note | status
+  date       DateTime @default(now())
+  note       String   @default("")
+}
+
+model EmailTemplate {
+  id        Int      @id @default(autoincrement())
+  name      String
+  kind      String   @default("initial") // initial | follow-up | other
+  subject   String
+  body      String
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id                 Int              @id @default(autoincrement())
+  prospectId         Int?
+  prospect           Prospect?        @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+  businessName       String
+  niche              String           @default("")
+  contactName        String           @default("")
+  email              String           @default("")
+  phone              String           @default("")
+  website            String           @default("")
+  googleBusinessUrl  String           @default("")
+  city               String           @default("")
+  province           String           @default("")
+  platforms          String           @default("Google Search") // Google Search | Meta | Both
+  monthlyFeeCents    Int              @default(40000)
+  setupFeeCents      Int              @default(0)
+  pilot              Boolean          @default(false)
+  startDate          DateTime?
+  minTermEndDate     DateTime?
+  adBudgetCents      Int              @default(50000)
+  successMetric      String           @default("leads") // leads | calls | bookings
+  avgJobValueCents   Int              @default(0)
+  status             String           @default("Onboarding") // Onboarding | Active | Paused | Ended
+  auditNotes         String           @default("{}") // JSON blob for audit prep
+  createdAt          DateTime         @default(now())
+  tasks              Task[]
+  checklist          ChecklistItem[]
+  campaigns          Campaign[]
+  optimizationLogs   OptimizationLog[]
+  metrics            MonthlyMetric[]
+  invoices           Invoice[]
+  caseStudy          CaseStudy?
+}
+
+model ChecklistItem {
+  id       Int     @id @default(autoincrement())
+  clientId Int
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type     String  // onboarding | audit
+  order    Int     @default(0)
+  label    String
+  done     Boolean @default(false)
+}
+
+model Campaign {
+  id               Int       @id @default(autoincrement())
+  clientId         Int
+  client           Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  platform         String    // Google Search | Meta
+  name             String
+  objective        String    @default("")
+  budgetCents      Int       @default(0)
+  radiusKm         Int?
+  status           String    @default("Draft")
+  launchDate       DateTime?
+  keywords         String    @default("[]") // JSON array
+  negativeKeywords String    @default("[]") // JSON array
+  callExtensions   Boolean   @default(false)
+  audienceNotes    String    @default("")
+  adCopies         AdCopy[]
+}
+
+model AdCopy {
+  id         Int      @id @default(autoincrement())
+  campaignId Int
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type       String   // headline | description | primary text
+  text       String
+  status     String   @default("testing") // testing | winner | paused
+}
+
+model OptimizationLog {
+  id       Int      @id @default(autoincrement())
+  clientId Int
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  date     DateTime @default(now())
+  checked  String   @default("")
+  changed  String   @default("")
+  why      String   @default("")
+}
+
+model MonthlyMetric {
+  id               Int    @id @default(autoincrement())
+  clientId         Int
+  client           Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  month            String // YYYY-MM
+  spendCents       Int    @default(0)
+  calls            Int    @default(0)
+  forms            Int    @default(0)
+  bookings         Int    @default(0)
+  jobsWon          Int    @default(0)
+  avgJobValueCents Int    @default(0)
+  nextMonthPlan    String @default("")
+
+  @@unique([clientId, month])
+}
+
+model Invoice {
+  id          Int       @id @default(autoincrement())
+  clientId    Int
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  number      String
+  period      String    @default("")
+  amountCents Int
+  sentAt      DateTime?
+  dueAt       DateTime?
+  paidAt      DateTime?
+  method      String    @default("e-transfer") // Wave | Stripe | e-transfer
+  status      String    @default("Draft")      // Draft | Sent | Paid | Overdue
+}
+
+model CaseStudy {
+  id                   Int     @id @default(autoincrement())
+  clientId             Int     @unique
+  client               Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  problem              String  @default("")
+  whatWasDone          String  @default("")
+  costPerLead          String  @default("")
+  result               String  @default("")
+  testimonial          String  @default("")
+  permissionToShare    Boolean @default(false)
+  googleReviewRequested Boolean @default(false)
+  referralAsked        Boolean @default(false)
+}
